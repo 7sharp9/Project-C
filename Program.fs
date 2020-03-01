@@ -8,8 +8,18 @@ open ProjectSystem
 [<EntryPoint>]
 let main argv =
     let checker = FSharpChecker.Create(keepAssemblyContents = true)
-    let line = 20
-    let column = 10
+    let line = 24
+    let column = 9
+
+// Krzysztof Cieslak: try to do
+    let isCompileFile (s:string) =
+          s.EndsWith(".fs") || s.EndsWith (".fsi")
+
+    let normalizeOptions (opts : FSharpProjectOptions) =
+        { opts with
+            SourceFiles = opts.SourceFiles |> Array.map (Path.GetFullPath)
+            OtherOptions = opts.OtherOptions |> Array.map (fun n -> if isCompileFile(n) then Path.GetFullPath n else n)
+        }
 
     let projectName = "/Users/davethomas/github/Project-C/Project-C.fsproj"
     let fileName = __SOURCE_FILE__
@@ -27,7 +37,7 @@ let main argv =
             controller.ProjectOptions
             |> Seq.find (fun (name, po) -> name.Contains "Project-C")
             |> snd
-        projectOptions
+        projectOptions |> normalizeOptions
 
     printfn "%A" projOptions
 
@@ -42,16 +52,15 @@ let main argv =
         match checkFileAnswer with
         | FSharpCheckFileAnswer.Aborted -> None
         | FSharpCheckFileAnswer.Succeeded results ->
+            //results.GetAllUsesOfAllSymbolsInFile() |> Async.RunSynchronously |> Some
             results.GetToolTipText
                 (line,
                  column,
-                 "",
-                 [],
+                 "    let projectName = \"/Users/davethomas/github/Project-C/Project-C.fsproj\"",
+                 ["projectName"],
                  FSharpTokenTag.Identifier)
             |> Async.RunSynchronously
             |> Some
 
-    printfn "%A" parseResults.Errors
-
-    printfn "Hello World from F#!"
+    printfn "%A" test
     0 // return an integer exit code
