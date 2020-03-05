@@ -1,37 +1,43 @@
 module App
-
+open Browser.Types
 open Browser.Dom
 open Fable.Core
 open Fable.Core.JsInterop
+open Fable.Core.JS
 
-type identity =  {username: string; password:string }
-type opts = { identity: identity; channels: string list }
+type Message = string -> obj -> string -> bool
 
-type MessageArgs = 
-    | MessageArgs of channel: string * userstate: string * message: string * self: bool
+type options =
+    abstract debug: bool with get, set
 
-type Client(opts: opts) =
-    // abstract getChannels: unit -> ResizeArray<string>
-    // abstract getOptions: unit -> Options
-    // abstract getUsername: unit -> string
-    // abstract isMod: channel: string * username: string -> bool
-    // abstract readyState: unit -> ClientBaseReadyStateReturn
-    //abstract on: ``event``: obj option * listener: obj option -> Client
-    [<Emit("this.on('message', %1)")>]
-    member this.onMessage: MessageArgs -> unit
-    // abstract addListener: ``event``: obj option * listener: obj option -> Client
-    // abstract removeListener: ``event``: obj option * listener: obj option -> Client
-    // abstract removeAllListeners: ?``event``: Events -> Client
-    // abstract setMaxListeners: n: float -> Client
-    // abstract emits: events: Array<Events> * values: ResizeArray<ResizeArray<obj option>> -> unit
-    // abstract emit: (obj option -> bool) with get, set
-    // abstract once: ``event``: obj option * listener: obj option -> Client
-    // abstract listenerCount: ``event``: Events -> float
+type connection = 
+    abstract secure: bool with get, set
+    abstract reconnect: bool with get, set
 
+type identity =
+    abstract username: string with get, set
+    abstract password: string with get, set
 
-let client = Client({identity = {username = ""; password = ""}; channels = [""]})
+type IClientOptions =
+    abstract options: options with get, set
+    abstract connection: connection with get, set
+    abstract identity: identity with get, set
+    abstract channels: ResizeArray<string> with get, set
 
-printfn "%A" client
+type IClient =
+    abstract connect: unit -> Promise<string * int>
+
+    [<Emit("$0.on('message', $1)")>]
+    abstract onMessage: ( string -> obj -> string -> bool -> unit) -> unit
+
+    [<Emit("$0.on('connected', $1)")>]
+    abstract onConnected:  ( string -> float -> unit) -> unit
+
+    abstract client: IClientOptions -> IClient
+
+[<ImportDefault("tmi.js")>]
+let tmi: IClient = jsNative
+
 // Mutable variable to count the number of times we clicked the button
 let mutable count = 0
 
@@ -40,5 +46,16 @@ let myButton = document.querySelector(".my-button") :?> Browser.Types.HTMLButton
 
 // Register our listener
 myButton.onclick <- fun _ ->
+    //debugger()
+    let options = 
+        jsOptions(fun (o: IClientOptions) ->
+            o.channels <- Env.channels |> ResizeArray
+            o.connection <- jsOptions(fun (c:connection) -> c.reconnect <- true; c.secure <- true)
+            o.identity <- jsOptions(fun (i: identity) -> i.password <- Env.auth; i.username <- Env.username)
+            o.options <- jsOptions(fun (o: options) -> o.debug <- true))
+
+    let client = tmi.client options
+    client.connect() |> ignore
+    client.onConnected(fun host port -> console.info("onConnected", host, port))
+    client.onMessage(fun host tags message self -> console.log(message))
     count <- count + 1
-    myButton.innerText <- sprintf "You clicked: %i time(s)" count
