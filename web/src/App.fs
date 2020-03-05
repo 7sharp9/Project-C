@@ -5,8 +5,6 @@ open Fable.Core
 open Fable.Core.JsInterop
 open Fable.Core.JS
 
-type Message = string -> obj -> string -> bool
-
 type options =
     abstract debug: bool with get, set
 
