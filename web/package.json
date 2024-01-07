@@ -9,12 +9,12 @@
     "fable-loader": "^2.1.8",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "tmi.js": "^1.5.0",
+    "tmi.js": "^1.8.5",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.12",
     "webpack-dev-server": "^3.10.3"
   },
   "devDependencies": {
-    "@types/tmi.js": "^1.4.0"
+    "@types/tmi.js": "^1.8.6"
   }
 }
