@@ -12,7 +12,7 @@
     "tmi.js": "^1.8.5",
     "webpack": "^4.41.6",
     "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.10.3"
+    "webpack-dev-server": "^3.11.3"
   },
   "devDependencies": {
     "@types/tmi.js": "^1.8.6"
